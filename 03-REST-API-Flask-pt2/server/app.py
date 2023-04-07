@@ -17,6 +17,7 @@ from flask_migrate import Migrate
 from flask_restful import Api, Resource
 
 # 1.✅ Import NotFound from werkzeug.exceptions for error handling
+from werkzeug.exceptions import NotFound
 
 
 from models import db, Production, CastMember
@@ -35,6 +36,7 @@ api = Api(app)
 class Productions(Resource):
     def get(self):
         production_list = [p.to_dict() for p in Production.query.all()]
+        
         response = make_response(
             production_list,
             200,
@@ -72,7 +74,9 @@ class ProductionByID(Resource):
     def get(self,id):
         production = Production.query.filter_by(id=id).first()
 # 3.✅ If a production is not found raise the NotFound exception
-    
+        if not production:
+            abort(404, "Profuction not found, sorry!")
+        
         production_dict = production.to_dict()
         response = make_response(
             production_dict,
@@ -140,3 +144,21 @@ class CastMembers(Resource):
         return response
 
 api.add_resource(CastMembers, '/cast_members')
+
+class CastMemberByID(Resource):
+    def get(self, id):
+        cast_member = CastMember.query.filter_by(id=id).first()
+        if not cast_member:
+            abort(404, 'The cast member you are looking for was not found')
+        response = make_response(
+            cast_member.to_dict(),
+            200
+        )
+
+        return response
+api.add_resource(CastMemberByID, '/cast_members/<int:id>')
+
+@app.errorhandler(NotFound)
+def handle_not_found(e):
+    response =  make_response("Not Found: Sorry the resource not found :(", 404)
+    return response
