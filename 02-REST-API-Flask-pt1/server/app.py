@@ -34,6 +34,8 @@ from flask_migrate import Migrate
 # 1. ✅ Import `Api` and `Resource` from `flask_restful`
     # ❓ What do these two classes do at a higher level? 
 
+from flask_restful import Api, Resource 
+
 from models import db, Production, CastMember
 
 app = Flask(__name__)
@@ -46,49 +48,72 @@ migrate = Migrate(app, db)
 db.init_app(app)
 
 # 2. ✅ Initialize the Api
-    # `api = Api(app)`
+api = Api(app)
 
 # 3. ✅ Create a Production class that inherits from Resource
+class Productions(Resource):
+    def get(self):
+
+        production_list = [ production.to_dict() for production in Production.query.all() ]
+
+        return make_response(production_list, 200)
+    
+    def post(self):
+        data = request.get_json()
+        new_production = Production(
+            title = data['title'],
+            genre = data['genre'],
+            budget = data['budget'],
+            image = data['image'],
+            director = data['director'],
+            description = data['description'],
+            ongoing = data['ongoing'],
+        )
+        db.session.add(new_production)
+        db.session.commit()
+
+        return make_response(new_production.to_dict(), 201)
+    
+    
+api.add_resource(Productions, '/productions')
+
+class CastMembers(Resource):
+    def get(self):
+        cast_members_list = [ cast_member.to_dict() for cast_member in CastMember.query.all()]
+        return make_response(cast_members_list, 200)
+    
+    def post(self):
+        data = request.get_json()
+        new_cast = Production(
+            name = data['name'],
+            role = data['role'],
+            production_id = data['production_id']
+        )
+        db.session.add(new_cast)
+        db.session.commit()
+
+        return make_response(new_cast.to_dict(), 201)
+    
+    
+api.add_resource(CastMembers, '/cast_members')
+
+class ProductionByID(Resource):
+    def get(self,id):
+        production_list = Production.query.filter_by(id=id).first().to_dict()
+        return make_response(production_list, 200)
+
+api.add_resource(ProductionByID, '/productions/<int:id>')
 
 # 4. ✅ Create a GET (All) Route
-    # 4.1 Make a `get` method that takes `self` as a param.
-    # 4.2 Create a `productions` array.
-    # 4.3 Make a query for all productions. For each `production`, create a dictionary 
-    # containing all attributes before appending to the `productions` array.
-    # 4.4 Create a `response` variable and set it to: 
-    #  #make_response(
-    #       jsonify(productions),
-    #       200
-    #  )
-    # 4.5 Return `response`.
-    # 4.6 After building the route, run the server and test in the browser.
-  
+
 # 5. ✅ Serialization
     # This is great, but there's a cleaner way to do this! Serialization will allow us to easily add our 
     # associations as well.
     # Navigate to `models.py` for Steps 6 - 9.
 
 # 10. ✅ Use our serializer to format our response to be cleaner
-    # 10.1 Query all of the productions, convert them to a dictionary with `to_dict` before setting them to a list.
-    # 10.2 Invoke `make_response`, pass it the production list along with a status of 200. Set `make_response` to a 
-    # `response` variable.
-    # 10.3 Return the `response` variable.
-    # 10.4 After building the route, run the server and test your results in the browser.
- 
+   
 # 11. ✅ Create a POST Route
-    # Prepare a POST request in Postman. Under the `Body` tab, select `form-data` and fill out the body 
-    # of a production request. 
-    
-    # Create the POST route 
-    # 📚 Review With Students: request object
-    
-    # 11.1 Create a `post` method and pass it `self`.
-    # 11.2 Create a new production from the `request.form` object.
-    # 11.3 Add and commit the new production.
-    # 11.4 Convert the new production to a dictionary with `to_dict`
-    # 11.5 Set `make_response` to a `response` variable and pass it the new production along with a status of 201.
-    # 11.6 Test the route in Postman.
-
    
 # 12. ✅ Add the new route to our api with `api.add_resource`
 
